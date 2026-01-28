@@ -1,0 +1,101 @@
+// @ts-nocheck
+/**
+ * Spawns enemies in waves with increasing difficulty.
+ */
+class WaveSpawner {
+    /** @type {GameEngine} */
+    game;
+
+    /** @type {number} */
+    wave;
+
+    /** @type {number} */
+    enemiesToSpawn;
+
+    /** @type {number} */
+    spawned;
+
+    /** @type {number} */
+    alive;
+
+    /** @type {number} */
+    spawnInterval;
+
+    /** @type {number} */
+    timer;
+
+    /**
+     * @param {GameEngine} game
+     */
+    constructor(game) {
+        this.game = game;
+
+        this.wave = 1;
+        this.enemiesToSpawn = 5;
+        this.spawned = 0;
+        this.alive = 0;
+
+        this.spawnInterval = 0.5; // seconds between spawns
+        this.timer = 0;
+    }
+
+    update() {
+        this.timer += this.game.clockTick;
+
+        // Spawn enemies until quota is met
+        if (this.spawned < this.enemiesToSpawn && this.timer >= this.spawnInterval) {
+            this.timer = 0;
+            this.spawnEnemy();
+        }
+
+        // If all enemies are dead AND all have spawned → next wave
+        if (this.spawned === this.enemiesToSpawn && this.alive === 0) {
+            this.startNextWave();
+        }
+    }
+
+    spawnEnemy() {
+        const canvas = this.game.ctx.canvas;
+
+        // Spawn around edges
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+
+        if (side === 0) { x = -50; y = Math.random() * canvas.height; }
+        if (side === 1) { x = canvas.width + 50; y = Math.random() * canvas.height; }
+        if (side === 2) { x = Math.random() * canvas.width; y = -50; }
+        if (side === 3) { x = Math.random() * canvas.width; y = canvas.height + 50; }
+
+        const enemy = new Enemy(this.game, x, y);
+
+        // Let the spawner track enemy deaths
+        enemy.onDeath = () => {
+            this.alive--;
+        };
+
+        this.game.addEntity(enemy);
+
+        this.spawned++;
+        this.alive++;
+    }
+
+    startNextWave() {
+        this.wave++;
+        this.spawned = 0;
+
+        // Difficulty scaling
+        this.enemiesToSpawn = Math.floor(this.enemiesToSpawn * 1.5);
+        this.spawnInterval = Math.max(0.2, this.spawnInterval - 0.05);
+
+        console.log("Starting wave", this.wave);
+    }
+
+    /**
+     * @param {CanvasRenderingContext2D} ctx
+     */
+    draw(ctx) {
+        ctx.fillStyle = "black";
+        ctx.font = "24px Arial";
+        ctx.fillText("Wave: " + this.wave, 20, 40);
+    }
+}

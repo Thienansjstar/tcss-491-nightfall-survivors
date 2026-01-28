@@ -1,0 +1,44 @@
+class Enemy {
+    onDeath;
+    constructor(game, x, y) {
+        this.game = game;
+        this.x = x;
+        this.y = y;
+
+        this.speed = 60; // pixels per second
+
+        this.animator = new Animator(
+            ASSET_MANAGER.getAsset("./enemy_walk.png"),
+            0, 0, 45, 110, 3, 0.2
+        );
+    }
+
+    update() {
+        const player = this.game.player;
+
+        // Direction vector toward player
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 0) {
+            this.x += (dx / dist) * this.speed * this.game.clockTick;
+            this.y += (dy / dist) * this.speed * this.game.clockTick;
+        }
+
+        // Collision check (touch damage)
+        const hitRadius = 30; // tweak as needed
+        if (dist < hitRadius) {
+            player.takeDamage(10); // implement this soon
+        }
+    }
+
+    draw(ctx) {
+        this.animator.drawFrame(
+            this.game.clockTick,
+            ctx,
+            this.x - 22.5,
+            this.y - 55
+        );
+    }
+}
