@@ -35,6 +35,10 @@ let gameFrame = 0;
 
 let Entities = [new Entity("assets/Chicken_Enemy.png")];
 
+let tileOffsetX = 0;
+let tileOffsetY = 0;
+const tileSize = 64;
+
 // ----------------------
 // UPDATE MOVEMENT + DIRECTION
 // ----------------------
@@ -46,19 +50,25 @@ function updateDirectionAndMovement() {
     if (keys["w"] || keys["ArrowUp"]) {
         sprite.setDirection(3); // backward
         moving = true;
+        tileOffsetY += 2;
     }
     if (keys["s"] || keys["ArrowDown"]) {
         sprite.setDirection(0); // forward
         moving = true;
+        tileOffsetY += -2;
     }
     if (keys["a"] || keys["ArrowLeft"]) {
         sprite.setDirection(2); // left
         moving = true;
+        tileOffsetX += 2;
     }
     if (keys["d"] || keys["ArrowRight"]) {
         sprite.setDirection(1); // right
         moving = true;
+        tileOffsetX += -2;
     }
+    tileOffsetX %=tileSize
+    tileOffsetY %=tileSize
 
     if (moving) sprite.startMoving();
     else sprite.stopMoving();
@@ -112,6 +122,8 @@ function animate(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    drawTiles();
+
     // IMPORTANT: pass screenX and screenY
     const screenX = sprite.x;
     const screenY = sprite.y;
@@ -134,6 +146,23 @@ function animate(timestamp) {
         sprite.draw(ctx, gameFrame, screenX, screenY);
     }
     requestAnimationFrame(animate);
+}
+
+function drawTiles() {
+
+    let grass = new Image(tileSize,tileSize)
+    grass.src = "assets/Grass.png";
+    for (let x = -tileSize; x < canvas.width + tileSize; x += tileSize) {
+        for (let y = -tileSize; y < canvas.height + tileSize; y += tileSize) {
+            ctx.drawImage(
+                grass,
+                x + tileOffsetX,
+                y + tileOffsetY,
+                tileSize,
+                tileSize
+            );
+        }
+    }
 }
 
 requestAnimationFrame(animate);
