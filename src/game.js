@@ -22,6 +22,9 @@ const sprite = new Sprite("assets/Main_Character.png");
 // center sprite on screen
 sprite.x = canvas.width / 2 - sprite.frameWidth / 2;
 sprite.y = canvas.height / 2 - sprite.frameHeight / 2;
+// Add health 
+sprite.health = 100; 
+sprite.maxHealth = 100;
 
 // ----------------------
 // ANIMATION TIMING
@@ -123,6 +126,28 @@ function animate(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawTiles();
+    // ----------------------
+// PLAYER HEALTH BAR (TOP LEFT)
+// ----------------------
+const barWidth = 200;
+const barHeight = 20;
+const barX = 20;
+const barY = 20;
+
+// background (red)
+ctx.fillStyle = "red";
+ctx.fillRect(barX, barY, barWidth, barHeight);
+
+// current health (red)
+const healthPercent = sprite.health / sprite.maxHealth;
+ctx.fillStyle = "red";
+ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+
+// border
+ctx.strokeStyle = "black";
+ctx.lineWidth = 2;
+ctx.strokeRect(barX, barY, barWidth, barHeight);
+
 
     // IMPORTANT: pass screenX and screenY
     const screenX = sprite.x;
