@@ -74,7 +74,9 @@ function updateDirectionAndMovement() {
     tileOffsetY %=tileSize
 
     if (moving) sprite.startMoving();
-    else sprite.stopMoving();
+    else sprite.stopMoving()
+
+    let tempEntities = [...Entities];
 
     Entities.forEach(entity => {
         const centerX = canvas.width / 2;
@@ -83,7 +85,7 @@ function updateDirectionAndMovement() {
         const dx = centerX - entity.X;
         const dy = centerY - entity.Y;
 
-        const angle = Math.atan2(dy, dx);
+        let angle = Math.atan2(dy, dx);
         if(gameFrame%FPS===0){
             if (angle > -Math.PI/4 && angle <= Math.PI/4) {
                 entity.setDirection(1); // right
@@ -97,12 +99,41 @@ function updateDirectionAndMovement() {
             }
         entity.startMoving();
 
-        entity.move(1)
-
         if(moving){
             entity.moveInDirection(2,(3-sprite.direction) % 4)
         }
+        if((entity.X >= sprite.x - sprite.frameWidth/2 && entity.X <= sprite.x +sprite.frameWidth/2)
+        && (entity.Y >= sprite.y - sprite.frameHeight/2 && entity.Y <= sprite.y +sprite.frameHeight/2)){
+
+            // angle from player to enemy (in degrees)
+            const dx = entity.X - sprite.x;
+            const dy = entity.Y - sprite.y;
+
+            let enemyAngleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+
+// player facing angle (in degrees)
+            const facingAnglesDeg = [90, 0, 180, -90];
+            let playerFacingDeg = facingAnglesDeg[sprite.direction];
+
+// angle difference
+            let diffDeg = enemyAngleDeg - playerFacingDeg;
+
+// normalize to [-180, 180]
+            diffDeg = ((diffDeg + 180) % 360) - 180;
+
+// adjustable attack angle
+            const attackAngleDeg = 100; // change this to whatever you want
+
+// angle-based attack
+            if (Math.abs(diffDeg) <= attackAngleDeg / 2) {
+                tempEntities = tempEntities.filter(temp => temp !== entity);
+            } else if(gameFrame%FPS===0){
+                sprite.health -= 5;
+            }
+        }
+        entity.move(1)
     });
+    Entities = tempEntities;
 }
 
 // ----------------------
@@ -127,26 +158,27 @@ function animate(timestamp) {
 
     drawTiles();
     // ----------------------
+// ----------------------
 // PLAYER HEALTH BAR (TOP LEFT)
 // ----------------------
-const barWidth = 200;
-const barHeight = 20;
-const barX = 20;
-const barY = 20;
+    const barWidth = 200;
+    const barHeight = 20;
+    const barX = 20;
+    const barY = 20;
 
-// background (red)
-ctx.fillStyle = "red";
-ctx.fillRect(barX, barY, barWidth, barHeight);
+// background (dark red or gray)
+    ctx.fillStyle = "#550000";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
 
-// current health (red)
-const healthPercent = sprite.health / sprite.maxHealth;
-ctx.fillStyle = "red";
-ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+// current health (bright red)
+    const healthPercent = sprite.health / sprite.maxHealth;
+    ctx.fillStyle = "red";
+    ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
 
 // border
-ctx.strokeStyle = "black";
-ctx.lineWidth = 2;
-ctx.strokeRect(barX, barY, barWidth, barHeight);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
 
 
     // IMPORTANT: pass screenX and screenY
