@@ -55,13 +55,16 @@ class Sprite {
 
         const sx = col * this.frameWidth;
         const sy = row * this.frameHeight;
-
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(screenX, screenY, this.frameWidth, this.frameHeight);
         ctx.drawImage(
             this.image,
             sx, sy,
             this.frameWidth, this.frameHeight,
             screenX, screenY,
             this.frameWidth, this.frameHeight
+            
         );
     }
 }
