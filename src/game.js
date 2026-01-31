@@ -32,6 +32,12 @@ let isDead = false;
 let deathTime = 0;
 
 // ----------------------
+// COUNTDOWN TIMER (5 minutes)
+// ----------------------
+let timeRemaining = 300; // 300 seconds = 5 minutes
+let lastSecondTime = 0;  // real-time tracking
+
+// ----------------------
 // ANIMATION TIMING
 // ----------------------
 const FPS = 4;
@@ -183,6 +189,16 @@ function animate(timestamp) {
         gameFrame++;
     }
 
+    // ----------------------
+    // REAL-TIME COUNTDOWN TIMER
+    // ----------------------
+    if (!isDead && timeRemaining > 0) {
+        if (timestamp - lastSecondTime >= 1000) {
+            timeRemaining--;
+            lastSecondTime = timestamp;
+        }
+    }
+
     // Check for death
     if (!isDead && sprite.health <= 0) {
         isDead = true;
@@ -226,6 +242,18 @@ function animate(timestamp) {
         barX + barWidth / 2,
         barY + barHeight - 4
     );
+
+    // ----------------------
+    // COUNTDOWN TIMER (TOP CENTER)
+    // ----------------------
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const formatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+    ctx.fillStyle = "white";
+    ctx.font = "28px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(formatted, barX + barWidth + 30, barY + barHeight - 2);
 
     // ----------------------
     // DRAW PLAYER + ENTITIES
