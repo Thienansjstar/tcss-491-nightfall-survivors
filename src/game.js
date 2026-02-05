@@ -32,10 +32,22 @@ let isDead = false;
 let deathTime = 0;
 
 // ----------------------
-// COUNTDOWN TIMER (5 minutes)
+// ELAPSED TIME COUNTER
 // ----------------------
-let timeRemaining = 300; // 300 seconds = 5 minutes
+let elapsedTime = 0; // seconds elapsed since game start
 let lastSecondTime = 0;  // real-time tracking
+
+// ----------------------
+// WAVE SYSTEM
+// ----------------------
+let currentWave = 1;
+let waveEnemies = 5; // starting enemies per wave
+let waveTimer = 60; // 60 seconds per wave
+let waveStartTime = 0;
+let waveActive = true;
+let waveCompleted = false;
+let gameStarted = false;
+let waveEnemiesSpawned = false;
 
 // ----------------------
 // ANIMATION TIMING
@@ -182,6 +194,11 @@ document.addEventListener("keydown", e => {
 // MAIN LOOP
 // ----------------------
 function animate(timestamp) {
+    if (!gameStarted) {
+        waveStartTime = timestamp;
+        gameStarted = true;
+    }
+
     const delta = timestamp - lastTime;
 
     if (!isDead && delta >= FRAME_TIME) {
@@ -190,11 +207,11 @@ function animate(timestamp) {
     }
 
     // ----------------------
-    // REAL-TIME COUNTDOWN TIMER
+    // REAL-TIME ELAPSED TIMER
     // ----------------------
-    if (!isDead && timeRemaining > 0) {
+    if (!isDead) {
         if (timestamp - lastSecondTime >= 1000) {
-            timeRemaining--;
+            elapsedTime++;
             lastSecondTime = timestamp;
         }
     }
@@ -205,8 +222,35 @@ function animate(timestamp) {
         deathTime = gameFrame;
     }
 
-    if (!isDead && gameFrame % SpawnTime === 0 && Entities.length < 30) {
-        Entities.push(new Entity("assets/Chicken_Enemy.png"));
+    // Wave system logic
+    if (!isDead && waveActive) {
+        // Start new wave immediately when completed
+        if (waveCompleted) {
+            currentWave++;
+            waveEnemies += 2; // Increase enemies per wave
+            waveTimer = Math.max(30, waveTimer - 5); // Decrease timer, minimum 30 seconds
+            waveCompleted = false;
+            waveStartTime = timestamp; // Reset wave timer
+            waveEnemiesSpawned = false; // Reset spawn flag for new wave
+        }
+
+        // Spawn enemies at the start of each wave (only once per wave)
+        if (!waveEnemiesSpawned && !waveCompleted) {
+            for (let i = 0; i < waveEnemies; i++) {
+                Entities.push(new Entity("assets/Chicken_Enemy.png"));
+            }
+            waveEnemiesSpawned = true;
+        }
+
+        // Check wave timer
+        const waveElapsed = (timestamp - waveStartTime) / 1000;
+        if (waveElapsed >= waveTimer) {
+            // Timer ran out - start next wave (enemies persist)
+            waveCompleted = true;
+        } else if (Entities.length === 0 && waveElapsed < waveTimer) {
+            // All enemies defeated before timer - start next wave immediately
+            waveCompleted = true;
+        }
     }
 
     updateDirectionAndMovement();
@@ -244,16 +288,35 @@ function animate(timestamp) {
     );
 
     // ----------------------
-    // COUNTDOWN TIMER (TOP CENTER)
+    // ELAPSED TIME (TOP CENTER)
     // ----------------------
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
+    const minutes = Math.floor(elapsedTime / 60);
+    const seconds = elapsedTime % 60;
     const formatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
     ctx.fillStyle = "white";
     ctx.font = "28px Arial";
     ctx.textAlign = "left";
     ctx.fillText(formatted, barX + barWidth + 30, barY + barHeight - 2);
+
+    // ----------------------
+    // WAVE INFORMATION
+    // ----------------------
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "right";
+    ctx.fillText(`Wave: ${currentWave}`, canvas.width - 20, barY + 20);
+
+    if (waveActive && !waveCompleted) {
+        const waveElapsed = (timestamp - waveStartTime) / 1000;
+        const waveRemaining = Math.max(0, waveTimer - waveElapsed);
+        const waveMinutes = Math.floor(waveRemaining / 60);
+        const waveSeconds = Math.floor(waveRemaining % 60);
+        const waveFormatted = `${waveMinutes}:${waveSeconds.toString().padStart(2, "0")}`;
+
+        ctx.fillText(`Wave Timer: ${waveFormatted}`, canvas.width - 20, barY + 50);
+        ctx.fillText(`Enemies: ${Entities.length}`, canvas.width - 20, barY + 80);
+    }
 
     // ----------------------
     // DRAW PLAYER + ENTITIES
